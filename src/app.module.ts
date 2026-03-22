@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { LineConnectorModule } from './line-connector/line-connector.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [LineConnectorModule],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
