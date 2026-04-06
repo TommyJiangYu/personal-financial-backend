@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { LineConnectorModule } from './line-connector/line-connector.module';
+import { MessagingModule } from './messaging/messaging.module';
+import { OcrModule } from './ocr/ocr.module';
 
 @Module({
   imports: [
@@ -8,7 +9,8 @@ import { LineConnectorModule } from './line-connector/line-connector.module';
       isGlobal: true, // ทำให้ ConfigService ใช้ได้ทุก module โดยไม่ต้อง import ซ้ำ
       envFilePath: ['.env', '../.env'],
     }),
-    LineConnectorModule,
+    MessagingModule,
+    OcrModule,
   ],
   controllers: [],
   providers: [],

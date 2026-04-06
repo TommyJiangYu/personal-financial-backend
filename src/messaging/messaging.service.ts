@@ -1,15 +1,24 @@
 import { messagingApi, webhook } from '@line/bot-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OcrService } from '../ocr/ocr.service';
 
 @Injectable()
-export class LineConnectorService {
-  private readonly logger = new Logger(LineConnectorService.name);
+export class MessagingService {
+  private readonly logger = new Logger(MessagingService.name);
   private readonly lineClient: messagingApi.MessagingApiClient;
+  private readonly lineBlobClient: messagingApi.MessagingApiBlobClient;
 
-  constructor(private readonly configService: ConfigService) {
-    const { MessagingApiClient } = messagingApi;
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly ocrService: OcrService,
+  ) {
+    const { MessagingApiClient, MessagingApiBlobClient } = messagingApi;
     this.lineClient = new MessagingApiClient({
+      channelAccessToken:
+        this.configService.get<string>('LINE_CHANNEL_ACCESS_TOKEN') || '',
+    });
+    this.lineBlobClient = new MessagingApiBlobClient({
       channelAccessToken:
         this.configService.get<string>('LINE_CHANNEL_ACCESS_TOKEN') || '',
     });
@@ -50,20 +59,68 @@ export class LineConnectorService {
   }
 
   private async handleMessageEvent(event: webhook.MessageEvent): Promise<void> {
-    const { message, replyToken, source } = event;
-
-    this.logger.log(
-      `Message from ${source?.type === 'user' ? source?.userId : 'unknown'}: [${message.type}]`,
-    );
+    const { message, replyToken } = event;
 
     if (message.type === 'text') {
       const textMessage = message;
       this.logger.log(`Text content: ${textMessage.text}`);
+      const result = await this.ocrService.textToSpeech(textMessage.text);
 
       // TODO: เปลี่ยนเป็น logic ที่ต้องการ
-      await this.replyText(replyToken || '', 'คิงจะทักฮามาอะหยัง');
+      await this.replyText(replyToken || '', result);
     } else if (message.type === 'image') {
       this.logger.log(`Received image message with ID: ${message.id}`);
+
+      try {
+        // 1. ดาวน์โหลด Content ของรูปภาพเป็น ReadableStream
+        const stream = await this.lineBlobClient.getMessageContent(message.id);
+        const chunks: Buffer[] = [];
+
+        // 2. ทยอยอ่านข้อมูลจาก Stream เข้าไปใน Array
+        for await (const chunk of stream as any) {
+          chunks.push(Buffer.from(chunk));
+        }
+        // 3. รวม Chunks ทั้งหมดให้กลายเป็น Buffer ก้อนเดียว
+        const imageBuffer = Buffer.concat(chunks);
+
+        // 4. ส่ง Buffer ไปให้ OCR Service ประมวลผล
+        const slipResult = await this.ocrService.scanBankSlip(
+          imageBuffer,
+          'image/jpeg', // รูปภาพที่ได้จาก LINE มักจะเป็น JPEG
+        );
+
+        console.log('slipResult : ', slipResult);
+
+        // 5. ตอบกลับเมื่ออ่านเสร็จ
+        if (slipResult && slipResult.amount != null) {
+          const { sender, receiver, amount, note, refNo, date, bankName } =
+            slipResult;
+          const replyMessage =
+            `✅ อ่านสลิปสำเร็จ!\n` +
+            `1. จาก: ${sender || 'ไม่ทราบ'} (${bankName || '-'})\n` +
+            `2. ถึง: ${receiver || 'ไม่ทราบ'}\n` +
+            `3. จำนวนเงิน: ${amount} บาท\n` +
+            `4. Note: ${note || '-'}\n` +
+            `5. เลขที่อ้างอิง: ${refNo || '-'}\n` +
+            `6. วันที่ทำรายการ: ${date || '-'}`;
+
+          await this.replyText(replyToken || '', replyMessage);
+        } else {
+          await this.replyText(
+            replyToken || '',
+            'เฮาบ่าเจอยอดเงินในรูปนี้เน่อ',
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          'Error processing image',
+          error instanceof Error ? error.stack : error,
+        );
+        await this.replyText(
+          replyToken || '',
+          'เกิดข้อผิดพลาดในการอ่านรูปครับ',
+        );
+      }
     } else {
       await this.replyText(
         replyToken || '',
