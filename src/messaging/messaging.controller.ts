@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { LineSignatureGuard } from './guards/line-signature.guard';
-import { MessagingService } from './messaging.service';
+import { MessagingService } from './services/messaging.service';
 
 @Controller('messaging')
 export class MessagingController {

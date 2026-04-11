@@ -1,7 +1,7 @@
 import { messagingApi, webhook } from '@line/bot-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OcrService } from '../ocr/ocr.service';
+import { OcrService } from '../../ocr/ocr.service';
 
 @Injectable()
 export class MessagingService {

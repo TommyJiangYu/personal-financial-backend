@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { OcrModule } from '../ocr/ocr.module';
 import { LineSignatureGuard } from './guards/line-signature.guard';
 import { MessagingController } from './messaging.controller';
-import { MessagingService } from './messaging.service';
+import { MessagingService } from './services/messaging.service';
 
 @Module({
   imports: [OcrModule],
