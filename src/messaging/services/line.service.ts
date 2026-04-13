@@ -39,8 +39,12 @@ export class LineService {
   }
 
   async getMessageContentStream(
-    messageId: string,
+    messageId?: string,
   ): Promise<AsyncIterable<Uint8Array>> {
+    if (!messageId) {
+      throw new Error('Message ID is required to get content stream');
+    }
+
     try {
       // 1. ดาวน์โหลด Content ของรูปภาพเป็น ReadableStream
       const stream = (await this.lineBlobClient.getMessageContent(
