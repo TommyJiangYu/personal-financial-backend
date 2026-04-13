@@ -4,6 +4,7 @@
 
 import { webhook } from '@line/bot-sdk';
 import { Injectable, Logger } from '@nestjs/common';
+import { GenerativeAiService } from '../../ai/services/generative-ai.service';
 import { REPLY_MESSAGE } from '../../enums/reply-message.enum';
 import { SlipData } from '../../interfaces/messing.interface';
 import { OcrService } from '../../ocr/ocr.service';
@@ -16,6 +17,7 @@ export class MessagingService {
   constructor(
     private readonly lineService: LineService,
     private readonly ocrService: OcrService,
+    private readonly generativeAiService: GenerativeAiService,
   ) {}
 
   async handleEvents(events: webhook.Event[]): Promise<void> {
@@ -58,7 +60,7 @@ export class MessagingService {
     if (message.type === 'text') {
       const textMessage = message;
       this.logger.log(`Text content: ${textMessage.text}`);
-      const result = await this.ocrService.textToSpeech(textMessage.text);
+      const result = await this.generativeAiService.ask(textMessage.text);
       await this.lineService.replyText(replyToken || '', result);
     } else if (message.type === 'image') {
       this.logger.log(`Received image message with ID: ${message.id}`);

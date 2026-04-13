@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AiModule } from './ai/ai.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { OcrModule } from './ocr/ocr.module';
 
@@ -11,6 +12,7 @@ import { OcrModule } from './ocr/ocr.module';
     }),
     MessagingModule,
     OcrModule,
+    AiModule,
   ],
   controllers: [],
   providers: [],
