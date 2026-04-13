@@ -1,16 +1,7 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-export interface SlipData {
-  amount: number | null;
-  date: string | null;
-  sender: string | null;
-  receiver: string | null;
-  note: string | null;
-  refNo: string | null;
-  bankName: string | null;
-}
+import { SlipData } from '../interfaces/messing.interface';
 
 @Injectable()
 export class OcrService {
