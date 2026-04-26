@@ -1,15 +1,15 @@
 // import { Test, TestingModule } from '@nestjs/testing';
-// import { GenerativeAiService } from './services/generative-ai.service';
+// import { OcrService } from './ocr.service';
 
-// describe('GenerativeAiService', () => {
-//   let service: GenerativeAiService;
+// describe('OcrService', () => {
+//   let service: OcrService;
 
 //   beforeEach(async () => {
 //     const module: TestingModule = await Test.createTestingModule({
-//       providers: [GenerativeAiService],
+//       providers: [OcrService],
 //     }).compile();
 
-//     service = module.get<GenerativeAiService>(GenerativeAiService);
+//     service = module.get<OcrService>(OcrService);
 //   });
 
 //   it('should be defined', () => {

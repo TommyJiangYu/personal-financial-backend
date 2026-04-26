@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GetModelConfig } from '../../interfaces/gemini.interface';
+import { DEFAULT_SAFETY_SETTINGS } from '../constants/config';
+import { GetModelConfig } from '../interfaces/gemini.interface';
 
 @Injectable()
 export class GeminiService {
@@ -12,13 +13,13 @@ export class GeminiService {
     this.geminiClient = new GoogleGenerativeAI(
       this.configService.get<string>('GOOGLE_API_KEY') || '',
     );
-
     this.defaultAiModel = this.configService.get<string>('GEMINI_MODEL') || '';
   }
 
   getModel(config: GetModelConfig) {
     const model = this.geminiClient.getGenerativeModel({
       model: config.aiModel ? config.aiModel : this.defaultAiModel,
+      safetySettings: DEFAULT_SAFETY_SETTINGS,
       ...config.customInstruction,
     });
 

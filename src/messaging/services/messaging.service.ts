@@ -5,9 +5,9 @@
 import { webhook } from '@line/bot-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { GenerativeAiService } from '../../ai/services/generative-ai.service';
-import { REPLY_MESSAGE } from '../../enums/reply-message.enum';
-import { SlipData } from '../../interfaces/messing.interface';
-import { OcrService } from '../../ocr/ocr.service';
+import { OcrService } from '../../ai/services/ocr.service';
+import { REPLY_MESSAGE } from '../enums/reply-message.enum';
+import { SlipData } from '../interfaces/messing.interface';
 import { LineService } from './line.service';
 
 @Injectable()

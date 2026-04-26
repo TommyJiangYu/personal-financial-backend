@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { OcrModule } from '../ocr/ocr.module';
+import { AiModule } from '../ai/ai.module';
 import { LineSignatureGuard } from './guards/line-signature.guard';
 import { MessagingController } from './messaging.controller';
+import { LineService } from './services/line.service';
 import { MessagingService } from './services/messaging.service';
 
 @Module({
-  imports: [OcrModule],
+  imports: [AiModule],
   controllers: [MessagingController],
-  providers: [MessagingService, LineSignatureGuard],
+  providers: [MessagingService, LineSignatureGuard, LineService],
 })
 export class MessagingModule {}

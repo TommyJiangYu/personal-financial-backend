@@ -3,6 +3,7 @@
 /node_modules
 /build
 /diagrams
+/knowledges
 
 # Logs
 logs
