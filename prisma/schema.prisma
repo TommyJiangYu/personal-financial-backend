@@ -1,0 +1,30 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  OWNER
+  PARTNER
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique @map("email")
+  role            UserRole  @default(PARTNER)
+  lineUserId      String    @unique @map("line_user_id")
+  lineDisplayName String?   @map("line_display_name")
+  isActive        Boolean   @default(true) @map("is_active")
+  isVerify        Boolean   @default(false) @map("is_verify")
+  lastActiveAt    DateTime? @map("last_active_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  verifiedAt      DateTime  @map("verified_at")
+  verifiedBy      String    @map("verified_by")
+
+  @@map("users")
+}
