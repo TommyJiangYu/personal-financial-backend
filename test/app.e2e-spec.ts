@@ -4,11 +4,13 @@ import { Readable } from 'node:stream';
 import { setTimeout as delay } from 'node:timers/promises';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { SlipReader } from '../src/ai/interfaces/slip-reader.interface';
-import { TextGenerator } from '../src/ai/interfaces/text-generator.interface';
-import { LineMessaging } from '../src/messaging/interfaces/line-messaging.interface';
 import { SlipData } from '../src/messaging/interfaces/messing.interface';
-import { createTestApplication } from './support/create-test-application';
+import {
+  createTestApplication,
+  LineMessagingAdapter,
+  SlipReaderAdapter,
+  TextGeneratorAdapter,
+} from './support/create-test-application';
 
 const LINE_CHANNEL_SECRET = 'test-line-channel-secret';
 
@@ -17,7 +19,7 @@ interface OutboundReply {
   text: string;
 }
 
-class FakeLineMessaging implements LineMessaging {
+class FakeLineMessaging implements LineMessagingAdapter {
   readonly replies: OutboundReply[] = [];
   private readonly messageContent = new Map<string, Buffer>();
 
@@ -58,7 +60,7 @@ class FakeLineMessaging implements LineMessaging {
   }
 }
 
-class FakeTextGenerator implements TextGenerator {
+class FakeTextGenerator implements TextGeneratorAdapter {
   reply = '';
 
   async generateReply(): Promise<string> {
@@ -67,7 +69,7 @@ class FakeTextGenerator implements TextGenerator {
   }
 }
 
-class FakeSlipReader implements SlipReader {
+class FakeSlipReader implements SlipReaderAdapter {
   result: SlipData | undefined;
 
   async scanBankSlip(): Promise<SlipData> {

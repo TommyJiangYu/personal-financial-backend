@@ -11,7 +11,7 @@
 
 Local skills under `.agents/skills/` are optional because that directory is gitignored. When a referenced skill exists, read its `SKILL.md` before taking actions in that branch. When it is absent, apply the fallback named below and continue; never block delivery on a local skill package.
 
-- **NestJS implementation or refactor:** read `.agents/skills/nestjs-best-practices/SKILL.md`. Apply feature-module ownership, constructor injection, interface tokens, explicit module exports, explicitly handled async workflows, and Nest TestingModule/Supertest patterns. Await controller work unless the endpoint intentionally acknowledges before a background task whose errors are handled internally.
+- **NestJS implementation or refactor:** read `.agents/skills/nestjs-best-practices/SKILL.md`. Apply feature-module ownership, constructor injection, direct class providers by default, explicit cross-module exports, explicitly handled async workflows, and Nest TestingModule/Supertest patterns. Introduce a custom provider token only when runtime selection, multiple implementations, or a token distinct from the implementation class is required. Await controller work unless the endpoint intentionally acknowledges before a background task whose errors are handled internally.
 - **Bug investigation:** read `.agents/skills/engineering/debug-mantra/SKILL.md`. Fallback: reproduce → trace the fail path → try to disprove ranked hypotheses → reconcile every experiment before proposing a fix.
 - **Review-ready change:** read `.agents/skills/engineering/scrutinize/SKILL.md` for an outsider pass before opening the pull request. Fallback: restate intent, seek a smaller solution, trace every claimed behavior end to end, then report evidence-backed findings.
 - **Identity, webhook, secret, authorization, financial-data, logging, or dependency-security work:** read `.agents/skills/security-testing/SKILL.md` and only the references relevant to the ticket. Keep attack traffic and scans inside explicitly authorized targets.
@@ -60,8 +60,8 @@ For a new capability, prefer `src/<feature>/` with one `<feature>.module.ts` com
 ## Preserve the module shape
 
 - Organize NestJS code by feature module under `src/`. Keep controllers focused on HTTP concerns and delegate workflow decisions to an injected service.
-- Keep orchestration in feature services. Put LINE, Gemini, and other external SDK operations behind focused adapters so tests can replace providers without changing orchestration.
-- Inject dependencies through constructors with `private readonly`. Prefer a small interface that hides provider setup, SDK types, retries, and response conversion.
+- Keep orchestration in feature services. Put LINE, Gemini, and other external SDK operations behind focused, role-named providers so tests can replace them without changing orchestration.
+- Inject dependencies through constructors with `private readonly`. Use the provider class as the Nest token when one concrete runtime implementation owns the role; tests should replace that class token with a focused fake. Keep its public surface small enough to hide provider setup, SDK types, retries, and response conversion.
 - Keep guards responsible for request admission, including signature validation. Business behavior belongs behind the admitted public interface.
 - Reuse project enums, interfaces, schemas, and constants from their feature folders instead of duplicating literals across modules.
 

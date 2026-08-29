@@ -1,13 +1,18 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import type { App } from 'supertest/types';
-import { SLIP_READER, TEXT_GENERATOR } from '../../src/ai/ai.tokens';
-import type { SlipReader } from '../../src/ai/interfaces/slip-reader.interface';
-import type { TextGenerator } from '../../src/ai/interfaces/text-generator.interface';
 import { AppModule } from '../../src/app.module';
-import type { LineMessaging } from '../../src/messaging/interfaces/line-messaging.interface';
-import { LINE_MESSAGING } from '../../src/messaging/messaging.tokens';
+import { SlipReader } from '../../src/ai/services/slip-reader.service';
+import { TextGenerator } from '../../src/ai/services/text-generator.service';
+import { LineService } from '../../src/messaging/services/line.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
+
+export type LineMessagingAdapter = Pick<
+  LineService,
+  'replyText' | 'getMessageContentStream'
+>;
+export type TextGeneratorAdapter = Pick<TextGenerator, 'generateReply'>;
+export type SlipReaderAdapter = Pick<SlipReader, 'scanBankSlip'>;
 
 interface TestPersistence {
   readonly client: object;
@@ -16,9 +21,9 @@ interface TestPersistence {
 }
 
 interface TestApplicationAdapters {
-  lineMessaging: LineMessaging;
-  textGenerator: TextGenerator;
-  slipReader: SlipReader;
+  lineMessaging: LineMessagingAdapter;
+  textGenerator: TextGeneratorAdapter;
+  slipReader: SlipReaderAdapter;
   persistence?: TestPersistence;
 }
 
@@ -34,11 +39,11 @@ export async function createTestApplication(
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
   })
-    .overrideProvider(LINE_MESSAGING)
+    .overrideProvider(LineService)
     .useValue(adapters.lineMessaging)
-    .overrideProvider(TEXT_GENERATOR)
+    .overrideProvider(TextGenerator)
     .useValue(adapters.textGenerator)
-    .overrideProvider(SLIP_READER)
+    .overrideProvider(SlipReader)
     .useValue(adapters.slipReader)
     .overrideProvider(PrismaService)
     .useValue(adapters.persistence ?? disconnectedPersistence)

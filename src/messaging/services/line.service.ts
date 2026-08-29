@@ -5,10 +5,9 @@
 import { messagingApi } from '@line/bot-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { LineMessaging } from '../interfaces/line-messaging.interface';
 
 @Injectable()
-export class LineService implements LineMessaging {
+export class LineService {
   private readonly logger = new Logger(LineService.name);
   private readonly lineClient: messagingApi.MessagingApiClient;
   private readonly lineBlobClient: messagingApi.MessagingApiBlobClient;

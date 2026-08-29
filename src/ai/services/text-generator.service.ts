@@ -6,15 +6,14 @@ import {
 } from '../constants/config';
 import { INSTRUCTION_ROLE, PROMPT_TYPE } from '../enums/prompt.enum';
 import { GetModelConfig } from '../interfaces/gemini.interface';
-import type { TextGenerator } from '../interfaces/text-generator.interface';
 import { SecurityLogger } from '../logger/security.logger';
 import { PromptSanitizationPipe } from '../pipes/prompt-sanitization.pipe';
 import { promptGenerator } from '../utils/prompt';
 import { GeminiService } from './gemini.service';
 
 @Injectable()
-export class GenerativeAiService implements TextGenerator {
-  private readonly logger = new Logger(GenerativeAiService.name);
+export class TextGenerator {
+  private readonly logger = new Logger(TextGenerator.name);
 
   constructor(
     private readonly geminiService: GeminiService,
@@ -85,20 +84,16 @@ export class GenerativeAiService implements TextGenerator {
       };
 
       const model = this.geminiService.getModel(customInstruction);
-
       const safeInput = this.wrapWithXmlDelimiter(sanitizedText);
-
       const result = await model.generateContent(safeInput);
-
       const candidate = result.response.candidates?.[0];
+
       if (candidate?.finishReason === FinishReason.SAFETY) {
         this.securityLogger.logGeminiBlock(candidate.safetyRatings);
         return 'เฮาตอบบ่าได้เน้อ ลองถามเรื่องอื่นดูจ้า 🙏';
       }
 
-      const responseText = result.response.text();
-
-      return this.filterSensitiveOutput(responseText);
+      return this.filterSensitiveOutput(result.response.text());
     } catch (error) {
       this.logger.error('Error generating AI reply');
       throw error;

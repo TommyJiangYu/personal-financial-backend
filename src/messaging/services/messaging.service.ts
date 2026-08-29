@@ -3,25 +3,20 @@
  */
 
 import { webhook } from '@line/bot-sdk';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { SLIP_READER, TEXT_GENERATOR } from '../../ai/ai.tokens';
-import type { SlipReader } from '../../ai/interfaces/slip-reader.interface';
-import type { TextGenerator } from '../../ai/interfaces/text-generator.interface';
+import { Injectable, Logger } from '@nestjs/common';
+import { SlipReader } from '../../ai/services/slip-reader.service';
+import { TextGenerator } from '../../ai/services/text-generator.service';
 import { REPLY_MESSAGE } from '../enums/reply-message.enum';
-import type { LineMessaging } from '../interfaces/line-messaging.interface';
 import { SlipData } from '../interfaces/messing.interface';
-import { LINE_MESSAGING } from '../messaging.tokens';
+import { LineService } from './line.service';
 
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
 
   constructor(
-    @Inject(LINE_MESSAGING)
-    private readonly lineMessaging: LineMessaging,
-    @Inject(SLIP_READER)
+    private readonly lineService: LineService,
     private readonly slipReader: SlipReader,
-    @Inject(TEXT_GENERATOR)
     private readonly textGenerator: TextGenerator,
   ) {}
 
@@ -63,12 +58,12 @@ export class MessagingService {
       const textMessage = message;
       this.logger.debug('Processing text message');
       const result = await this.textGenerator.generateReply(textMessage.text);
-      await this.lineMessaging.replyText(replyToken || '', result);
+      await this.lineService.replyText(replyToken || '', result);
     } else if (message.type === 'image') {
       this.logger.debug('Processing image message');
 
       try {
-        const stream = await this.lineMessaging.getMessageContentStream(
+        const stream = await this.lineService.getMessageContentStream(
           event?.message?.id,
         );
 
@@ -92,22 +87,22 @@ export class MessagingService {
         if (slipResult && slipResult.amount != null) {
           const replyMessage = this.slipMessageGenerator(slipResult);
 
-          await this.lineMessaging.replyText(replyToken || '', replyMessage);
+          await this.lineService.replyText(replyToken || '', replyMessage);
         } else {
-          await this.lineMessaging.replyText(
+          await this.lineService.replyText(
             replyToken || '',
             REPLY_MESSAGE.UNKNOWN_MESSAGE,
           );
         }
       } catch {
         this.logger.error('Error processing image');
-        await this.lineMessaging.replyText(
+        await this.lineService.replyText(
           replyToken || '',
           REPLY_MESSAGE.ERROR_MESSAGE,
         );
       }
     } else {
-      await this.lineMessaging.replyText(
+      await this.lineService.replyText(
         replyToken || '',
         `เฮาได้รับ ${message.type} message แล้วเน้อ`,
       );
@@ -117,7 +112,7 @@ export class MessagingService {
   private async handleFollowEvent(event: webhook.FollowEvent): Promise<void> {
     this.logger.debug('Processing follow event');
 
-    await this.lineMessaging.replyText(
+    await this.lineService.replyText(
       event?.replyToken,
       REPLY_MESSAGE.WELCOME_MESSAGE,
     );
@@ -132,7 +127,7 @@ export class MessagingService {
   ): Promise<void> {
     this.logger.debug('Processing postback event');
 
-    await this.lineMessaging.replyText(
+    await this.lineService.replyText(
       event?.replyToken || '',
       `Postback received: ${event.postback.data}`,
     );
