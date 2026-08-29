@@ -21,10 +21,16 @@ export class MessagingController {
   @UseGuards(LineSignatureGuard)
   @HttpCode(HttpStatus.OK)
   handleWebhook(@Body() body: webhook.CallbackRequest): string {
-    this.messagingService.handleEvents(body.events).catch((error) => {
-      this.logger.error('Error processing webhook events', error);
-    });
+    void this.processEvents(body.events);
 
     return 'OK';
+  }
+
+  private async processEvents(events: webhook.Event[]): Promise<void> {
+    try {
+      await this.messagingService.handleEvents(events);
+    } catch {
+      this.logger.error('Error processing webhook events');
+    }
   }
 }

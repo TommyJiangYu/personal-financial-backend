@@ -12,8 +12,8 @@ import { promptGenerator } from '../utils/prompt';
 import { GeminiService } from './gemini.service';
 
 @Injectable()
-export class GenerativeAiService {
-  private readonly logger = new Logger(GenerativeAiService.name);
+export class TextGenerator {
+  private readonly logger = new Logger(TextGenerator.name);
 
   constructor(
     private readonly geminiService: GeminiService,
@@ -52,7 +52,7 @@ export class GenerativeAiService {
     return filtered;
   }
 
-  async ask(text: string): Promise<string> {
+  async generateReply(text: string): Promise<string> {
     let sanitizedText: string;
     try {
       sanitizedText = this.sanitizationPipe.transform(text);
@@ -64,7 +64,6 @@ export class GenerativeAiService {
     if (matchedLabel !== null) {
       this.securityLogger.logInjectionAttempt(
         'regex_injection_detected',
-        sanitizedText,
         matchedLabel,
       );
       return 'เฮาตอบคำถามนั้นบ่าได้เน้อ ถามอะหยังอื่นมาได้เลย 🙅';
@@ -85,25 +84,18 @@ export class GenerativeAiService {
       };
 
       const model = this.geminiService.getModel(customInstruction);
-
       const safeInput = this.wrapWithXmlDelimiter(sanitizedText);
-
       const result = await model.generateContent(safeInput);
-
       const candidate = result.response.candidates?.[0];
+
       if (candidate?.finishReason === FinishReason.SAFETY) {
         this.securityLogger.logGeminiBlock(candidate.safetyRatings);
         return 'เฮาตอบบ่าได้เน้อ ลองถามเรื่องอื่นดูจ้า 🙏';
       }
 
-      const responseText = result.response.text();
-
-      return this.filterSensitiveOutput(responseText);
+      return this.filterSensitiveOutput(result.response.text());
     } catch (error) {
-      this.logger.error(
-        'Error in GenerativeAiService.ask:',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.error('Error generating AI reply');
       throw error;
     }
   }

@@ -2,19 +2,19 @@ import { Module } from '@nestjs/common';
 import { SecurityLogger } from './logger/security.logger';
 import { PromptSanitizationPipe } from './pipes/prompt-sanitization.pipe';
 import { GeminiService } from './services/gemini.service';
-import { GenerativeAiService } from './services/generative-ai.service';
 import { OcrFormatService } from './services/ocr-format.service';
-import { OcrService } from './services/ocr.service';
+import { SlipReader } from './services/slip-reader.service';
+import { TextGenerator } from './services/text-generator.service';
 
 @Module({
   providers: [
     GeminiService,
-    GenerativeAiService,
-    OcrService,
+    TextGenerator,
+    SlipReader,
     OcrFormatService,
     SecurityLogger,
     PromptSanitizationPipe,
   ],
-  exports: [GeminiService, GenerativeAiService, OcrService],
+  exports: [TextGenerator, SlipReader],
 })
 export class AiModule {}

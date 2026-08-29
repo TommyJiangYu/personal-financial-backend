@@ -30,11 +30,8 @@ export class LineService {
         replyToken,
         messages: [{ type: 'text', text }],
       });
-    } catch (error) {
-      this.logger.error(
-        'Error replying message',
-        error instanceof Error ? error.stack : error,
-      );
+    } catch {
+      this.logger.error('Error replying to LINE message');
     }
   }
 
@@ -52,13 +49,10 @@ export class LineService {
       )) as AsyncIterable<Uint8Array>;
 
       return stream;
-    } catch (error) {
-      this.logger.error(
-        'Error receiving image content',
-        error instanceof Error ? error.stack : error,
-      );
+    } catch {
+      this.logger.error('Error receiving LINE message content');
 
-      throw new Error(`Error receiving image : ${messageId}`);
+      throw new Error('Unable to receive LINE message content');
     }
   }
 }
