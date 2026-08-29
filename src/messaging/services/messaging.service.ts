@@ -3,32 +3,34 @@
  */
 
 import { webhook } from '@line/bot-sdk';
-import { Injectable, Logger } from '@nestjs/common';
-import { GenerativeAiService } from '../../ai/services/generative-ai.service';
-import { OcrService } from '../../ai/services/ocr.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { SLIP_READER, TEXT_GENERATOR } from '../../ai/ai.tokens';
+import type { SlipReader } from '../../ai/interfaces/slip-reader.interface';
+import type { TextGenerator } from '../../ai/interfaces/text-generator.interface';
 import { REPLY_MESSAGE } from '../enums/reply-message.enum';
+import type { LineMessaging } from '../interfaces/line-messaging.interface';
 import { SlipData } from '../interfaces/messing.interface';
-import { LineService } from './line.service';
+import { LINE_MESSAGING } from '../messaging.tokens';
 
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
 
   constructor(
-    private readonly lineService: LineService,
-    private readonly ocrService: OcrService,
-    private readonly generativeAiService: GenerativeAiService,
+    @Inject(LINE_MESSAGING)
+    private readonly lineMessaging: LineMessaging,
+    @Inject(SLIP_READER)
+    private readonly slipReader: SlipReader,
+    @Inject(TEXT_GENERATOR)
+    private readonly textGenerator: TextGenerator,
   ) {}
 
   async handleEvents(events: webhook.Event[]): Promise<void> {
     for (const event of events) {
       try {
         await this.handleEvent(event);
-      } catch (error) {
-        this.logger.error(
-          `Error handling event type: ${event.type}`,
-          error instanceof Error ? error.stack : error,
-        );
+      } catch {
+        this.logger.error(`Error handling event type: ${event.type}`);
       }
     }
   }
@@ -44,7 +46,7 @@ export class MessagingService {
         await this.handleFollowEvent(event);
         break;
       case 'unfollow':
-        this.handleUnfollowEvent(event);
+        this.handleUnfollowEvent();
         break;
       case 'postback':
         await this.handlePostbackEvent(event);
@@ -59,14 +61,14 @@ export class MessagingService {
 
     if (message.type === 'text') {
       const textMessage = message;
-      this.logger.log(`Text content: ${textMessage.text}`);
-      const result = await this.generativeAiService.ask(textMessage.text);
-      await this.lineService.replyText(replyToken || '', result);
+      this.logger.debug('Processing text message');
+      const result = await this.textGenerator.generateReply(textMessage.text);
+      await this.lineMessaging.replyText(replyToken || '', result);
     } else if (message.type === 'image') {
-      this.logger.log(`Received image message with ID: ${message.id}`);
+      this.logger.debug('Processing image message');
 
       try {
-        const stream = await this.lineService.getMessageContentStream(
+        const stream = await this.lineMessaging.getMessageContentStream(
           event?.message?.id,
         );
 
@@ -81,7 +83,7 @@ export class MessagingService {
         const imageBuffer = Buffer.concat(chunks);
 
         // 4. ส่ง Buffer ไปให้ OCR Service ประมวลผล
-        const slipResult = await this.ocrService.scanBankSlip(
+        const slipResult = await this.slipReader.scanBankSlip(
           imageBuffer,
           'image/jpeg',
         );
@@ -90,25 +92,22 @@ export class MessagingService {
         if (slipResult && slipResult.amount != null) {
           const replyMessage = this.slipMessageGenerator(slipResult);
 
-          await this.lineService.replyText(replyToken || '', replyMessage);
+          await this.lineMessaging.replyText(replyToken || '', replyMessage);
         } else {
-          await this.lineService.replyText(
+          await this.lineMessaging.replyText(
             replyToken || '',
             REPLY_MESSAGE.UNKNOWN_MESSAGE,
           );
         }
-      } catch (error) {
-        this.logger.error(
-          'Error processing image',
-          error instanceof Error ? error.stack : error,
-        );
-        await this.lineService.replyText(
+      } catch {
+        this.logger.error('Error processing image');
+        await this.lineMessaging.replyText(
           replyToken || '',
           REPLY_MESSAGE.ERROR_MESSAGE,
         );
       }
     } else {
-      await this.lineService.replyText(
+      await this.lineMessaging.replyText(
         replyToken || '',
         `เฮาได้รับ ${message.type} message แล้วเน้อ`,
       );
@@ -116,28 +115,24 @@ export class MessagingService {
   }
 
   private async handleFollowEvent(event: webhook.FollowEvent): Promise<void> {
-    const userId =
-      event?.source?.type === 'user' ? event?.source?.userId : 'unknown';
-    this.logger.log(`New follower: ${userId}`);
+    this.logger.debug('Processing follow event');
 
-    await this.lineService.replyText(
+    await this.lineMessaging.replyText(
       event?.replyToken,
       REPLY_MESSAGE.WELCOME_MESSAGE,
     );
   }
 
-  private handleUnfollowEvent(event: webhook.UnfollowEvent) {
-    const userId =
-      event?.source?.type === 'user' ? event?.source?.userId : 'unknown';
-    this.logger.log(`User unfollowed: ${userId}`);
+  private handleUnfollowEvent(): void {
+    this.logger.debug('Processing unfollow event');
   }
 
   private async handlePostbackEvent(
     event: webhook.PostbackEvent,
   ): Promise<void> {
-    this.logger.log(`Postback data: ${event.postback.data}`);
+    this.logger.debug('Processing postback event');
 
-    await this.lineService.replyText(
+    await this.lineMessaging.replyText(
       event?.replyToken || '',
       `Postback received: ${event.postback.data}`,
     );

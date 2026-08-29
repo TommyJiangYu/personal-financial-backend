@@ -12,18 +12,11 @@ export class SecurityLogger {
 
   logInjectionAttempt(
     eventType: SecurityEventType,
-    input: string,
     matchedPattern?: string,
-    userId?: string,
   ): void {
-    const truncated = input.substring(0, 100);
-    const suffix = input.length > 100 ? '...' : '';
-
     this.logger.warn(
       `[SECURITY][${eventType}]` +
-        (userId ? ` User:${userId}` : '') +
-        (matchedPattern ? ` Pattern:${matchedPattern}` : '') +
-        ` | Input: "${truncated}${suffix}"`,
+        (matchedPattern ? ` Pattern:${matchedPattern}` : ''),
     );
   }
 

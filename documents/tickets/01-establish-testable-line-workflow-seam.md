@@ -4,13 +4,12 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** review
 
-- [ ] A signed text webhook can be exercised through the public webhook boundary with fake provider adapters.
-- [ ] A signed image webhook can be exercised without calling the real LINE or Gemini services.
-- [ ] Tests can observe outbound LINE messages and orchestration results without asserting private methods.
-- [ ] Invalid LINE signatures remain rejected.
-- [ ] Existing text, image, follow, unfollow and postback routing continues to work.
-- [ ] The obsolete starter end-to-end expectation is replaced by behavior that exists in the application.
-- [ ] The test setup can use a disposable database when later tickets introduce persisted state.
-
+- [x] A signed text webhook can be exercised through the public webhook boundary with fake provider adapters.
+- [x] A signed image webhook can be exercised without calling the real LINE or Gemini services.
+- [x] Tests can observe outbound LINE messages and orchestration results without asserting private methods.
+- [x] Invalid LINE signatures remain rejected.
+- [x] Existing text, image, follow, unfollow and postback routing continues to work.
+- [x] The obsolete starter end-to-end expectation is replaced by behavior that exists in the application.
+- [x] The test setup can use a disposable database when later tickets introduce persisted state.

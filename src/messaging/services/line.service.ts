@@ -5,9 +5,10 @@
 import { messagingApi } from '@line/bot-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { LineMessaging } from '../interfaces/line-messaging.interface';
 
 @Injectable()
-export class LineService {
+export class LineService implements LineMessaging {
   private readonly logger = new Logger(LineService.name);
   private readonly lineClient: messagingApi.MessagingApiClient;
   private readonly lineBlobClient: messagingApi.MessagingApiBlobClient;
@@ -30,11 +31,8 @@ export class LineService {
         replyToken,
         messages: [{ type: 'text', text }],
       });
-    } catch (error) {
-      this.logger.error(
-        'Error replying message',
-        error instanceof Error ? error.stack : error,
-      );
+    } catch {
+      this.logger.error('Error replying to LINE message');
     }
   }
 
@@ -52,13 +50,10 @@ export class LineService {
       )) as AsyncIterable<Uint8Array>;
 
       return stream;
-    } catch (error) {
-      this.logger.error(
-        'Error receiving image content',
-        error instanceof Error ? error.stack : error,
-      );
+    } catch {
+      this.logger.error('Error receiving LINE message content');
 
-      throw new Error(`Error receiving image : ${messageId}`);
+      throw new Error('Unable to receive LINE message content');
     }
   }
 }

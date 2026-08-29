@@ -6,13 +6,14 @@ import {
 } from '../constants/config';
 import { INSTRUCTION_ROLE, PROMPT_TYPE } from '../enums/prompt.enum';
 import { GetModelConfig } from '../interfaces/gemini.interface';
+import type { TextGenerator } from '../interfaces/text-generator.interface';
 import { SecurityLogger } from '../logger/security.logger';
 import { PromptSanitizationPipe } from '../pipes/prompt-sanitization.pipe';
 import { promptGenerator } from '../utils/prompt';
 import { GeminiService } from './gemini.service';
 
 @Injectable()
-export class GenerativeAiService {
+export class GenerativeAiService implements TextGenerator {
   private readonly logger = new Logger(GenerativeAiService.name);
 
   constructor(
@@ -52,7 +53,7 @@ export class GenerativeAiService {
     return filtered;
   }
 
-  async ask(text: string): Promise<string> {
+  async generateReply(text: string): Promise<string> {
     let sanitizedText: string;
     try {
       sanitizedText = this.sanitizationPipe.transform(text);
@@ -64,7 +65,6 @@ export class GenerativeAiService {
     if (matchedLabel !== null) {
       this.securityLogger.logInjectionAttempt(
         'regex_injection_detected',
-        sanitizedText,
         matchedLabel,
       );
       return 'เฮาตอบคำถามนั้นบ่าได้เน้อ ถามอะหยังอื่นมาได้เลย 🙅';
@@ -100,10 +100,7 @@ export class GenerativeAiService {
 
       return this.filterSensitiveOutput(responseText);
     } catch (error) {
-      this.logger.error(
-        'Error in GenerativeAiService.ask:',
-        error instanceof Error ? error.stack : error,
-      );
+      this.logger.error('Error generating AI reply');
       throw error;
     }
   }
